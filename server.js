@@ -10,18 +10,27 @@ app.use(express.json());
 // PASTE YOUR EXACT GOOGLE WEB APP URL HERE
 const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxt-8q7pnURZtKoEG0BtCYYMu05mCX-yqFPdstbDoF8QJrHnUyV63KkSd_3BkTblt0v/exec";
 
-// FIX: Force the server to load index.html when you open the root URL "/"
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// 1. ROUTE FOR USER INTERFACE (e.g., https://onrender.com)
+app.get('/user', (req, res) => {
+    res.sendFile(path.join(__dirname, 'user.html'));
 });
 
-// Secure API endpoint that handles your form submissions safely
+// 2. ROUTE FOR ADMIN INTERFACE (e.g., https://onrender.com)
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// DEFAULT FALLBACK: Redirect the main root link "/" to the user view automatically
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'user.html'));
+});
+
+// API endpoint that securely handles your form submissions in the background
 app.post('/submit-job', async (req, res) => {
     try {
         const response = await axios.post(GOOGLE_WEB_APP_URL, req.body, {
             headers: { 'Content-Type': 'application/json' }
         });
-        
         res.status(200).json({ success: true });
     } catch (error) {
         console.error("Error forwarding to Google:", error.message);
