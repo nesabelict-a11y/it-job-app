@@ -11,7 +11,7 @@ app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // PASTE YOUR EXACT GOOGLE WEB APP URL HERE
-const GOOGLE_WEB_APP_URL = "https://google.com";
+const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxt-8q7pnURZtKoEG0BtCYYMu05mCX-yqFPdstbDoF8QJrHnUyV63KkSd_3BkTblt0v/exec";
 
 app.post('/submit-job', async (req, res) => {
     try {
