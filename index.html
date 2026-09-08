@@ -1,10 +1,29 @@
-// DO NOT put the Google URL here anymore. It's completely hidden!
-// Just call your own server's endpoint:
+// Submit via background POST request directly to your Render server
 fetch('/submit-job', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+        'Content-Type': 'application/json' 
+    },
     body: JSON.stringify(formData)
 })
-.then(() => {
-    msgDiv.innerText = "Job Order Submitted Successfully!";
+.then(response => {
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
 })
+.then(data => {
+    if (data.success) {
+        msgDiv.style.color = "green";
+        msgDiv.innerText = "Job Order Submitted Successfully!";
+        document.getElementById('jobOrderForm').reset(); // Clears the form fields
+    } else {
+        msgDiv.style.color = "red";
+        msgDiv.innerText = "Error: Server failed to process the job order.";
+    }
+})
+.catch(error => {
+    msgDiv.style.color = "red";
+    msgDiv.innerText = "Error submitting request. Please try again.";
+    console.error("Submission Error:", error);
+});
