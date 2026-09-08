@@ -1,12 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const axios = require('axios'); // Upgraded to Axios to handle Google Redirect bugs
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// This ensures your static files are loaded safely regardless of folder structure
 app.use(express.static(__dirname)); 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -15,23 +15,15 @@ const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxt-8q7pnURZ
 
 app.post('/submit-job', async (req, res) => {
     try {
-        // We add redirect: "follow" to let Node.js jump Google's security checkpoints
-        const response = await fetch(GOOGLE_WEB_APP_URL, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(req.body),
-            redirect: 'follow' 
+        // Axios natively and safely handles Google Script 302 redirects automatically
+        const response = await axios.post(GOOGLE_WEB_APP_URL, req.body, {
+            headers: { 'Content-Type': 'application/json' }
         });
         
-        // Google Web Apps respond with text/html redirects or JSON strings
-        const responseText = await response.text();
-        
-        // Send a clean success reply back to your HTML page
-        res.status(200).json({ success: true, data: responseText });
+        // Return success back to your frontend HTML
+        res.status(200).json({ success: true });
     } catch (error) {
-        console.error("Error forwarding to Google:", error);
+        console.error("Error forwarding to Google:", error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });
