@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(express.static(__dirname)); // This serves your HTML form
 
 // THE GOOGLE URL IS SECURELY HIDDEN HERE ON THE SERVER
-const GOOGLE_WEB_APP_URL = "https://google.com";
+const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxt-8q7pnURZtKoEG0BtCYYMu05mCX-yqFPdstbDoF8QJrHnUyV63KkSd_3BkTblt0v/exec";
 
 app.post('/submit-job', async (req, res) => {
     try {
