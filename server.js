@@ -1,26 +1,27 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const axios = require('axios'); // Upgraded to Axios to handle Google Redirect bugs
+const axios = require('axios');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static(__dirname)); 
-app.use(express.static(path.join(__dirname, 'public')));
-
 // PASTE YOUR EXACT GOOGLE WEB APP URL HERE
 const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxt-8q7pnURZtKoEG0BtCYYMu05mCX-yqFPdstbDoF8QJrHnUyV63KkSd_3BkTblt0v/exec";
 
+// FIX: Force the server to load index.html when you open the root URL "/"
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Secure API endpoint that handles your form submissions safely
 app.post('/submit-job', async (req, res) => {
     try {
-        // Axios natively and safely handles Google Script 302 redirects automatically
         const response = await axios.post(GOOGLE_WEB_APP_URL, req.body, {
             headers: { 'Content-Type': 'application/json' }
         });
         
-        // Return success back to your frontend HTML
         res.status(200).json({ success: true });
     } catch (error) {
         console.error("Error forwarding to Google:", error.message);
