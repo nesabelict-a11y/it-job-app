@@ -1,0 +1,10 @@
+// DO NOT put the Google URL here anymore. It's completely hidden!
+// Just call your own server's endpoint:
+fetch('/submit-job', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData)
+})
+.then(() => {
+    msgDiv.innerText = "Job Order Submitted Successfully!";
+})
