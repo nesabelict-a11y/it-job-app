@@ -4,7 +4,7 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // This serves your HTML form
+app.use(express.static(__dirname)); // This serves your HTML form
 
 // THE GOOGLE URL IS SECURELY HIDDEN HERE ON THE SERVER
 const GOOGLE_WEB_APP_URL = "https://google.com";
