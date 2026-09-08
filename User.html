@@ -1,0 +1,168 @@
+<!-- User.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding: 20px; background-color: #f8f9fa; }
+    .card { margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .status-pending { background-color: #fff3cd; color: #856404; font-weight: bold; padding: 5px 10px; border-radius: 4px;}
+    .status-done { background-color: #d4edda; color: #155724; font-weight: bold; padding: 5px 10px; border-radius: 4px;}
+  </style>
+</head>
+<body>
+  
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="m-0">🖥️ NESABEL ICT Support Portal</h2>
+  <a href="https://accounts.google.com/Logout" target="_top" class="btn btn-outline-danger">🚪 Logout</a>
+</div>
+    
+    <div class="row">
+      <!-- Ticket Submission Form -->
+      <div class="col-md-5">
+        <div class="card">
+          <div class="card-header bg-primary text-white">Submit a New Request</div>
+          <div class="card-body">
+            <form id="jobForm">
+              <div class="mb-3">
+                <label class="form-label">Your Email</label>
+                <input type="email" id="userName" class="form-control" required value="<?= userEmail ?>" readonly>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Category</label>
+                <select id="category" class="form-select" required>
+                  <option value="" disabled selected>Select a category...</option>
+                  <option value="Hardware">Hardware</option>
+                  <option value="Network">Network</option>
+                  <option value="Software">Software</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Issue Description</label>
+                <textarea id="description" class="form-control" rows="3" required></textarea>
+              </div>
+              <div class="mb-4">
+                <label class="form-label">Attach Screenshot <small class="text-muted">(Optional)</small></label>
+                <input type="file" id="attachment" class="form-control" accept="image/*">
+              </div>
+              <button type="submit" id="submitBtn" class="btn btn-primary w-100">Submit Request</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      
+      <!-- User's Personal Ticket History -->
+      <div class="col-md-7">
+        <div class="card">
+          <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <span>My Recent Tickets</span>
+            <button class="btn btn-sm btn-light" onclick="loadMyTickets()">🔄 Refresh</button>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead>
+                  <tr>
+                    <th>Job ID</th>
+                    <th>Issue</th>
+                    <th>Status</th>
+                    <th>Tech</th>
+                  </tr>
+                </thead>
+                <tbody id="myTicketsBody">
+                  <tr><td colspan="4" class="text-center">Loading your tickets...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      loadMyTickets();
+      
+      document.getElementById("jobForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        
+        const user = document.getElementById("userName").value;
+        const category = document.getElementById("category").value;
+        const desc = document.getElementById("description").value;
+        const fileInput = document.getElementById("attachment");
+        const submitBtn = document.getElementById("submitBtn");
+        const originalBtnText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = "⏳ Submitting...";
+        submitBtn.disabled = true;
+        
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const base64Data = e.target.result.split(',')[1]; 
+            submitJobToBackend(user, desc, category, base64Data, file.name, file.type, submitBtn, originalBtnText);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          submitJobToBackend(user, desc, category, null, null, null, submitBtn, originalBtnText);
+        }
+      });
+    });
+
+    function submitJobToBackend(user, desc, category, fileData, fileName, mimeType, btn, originalText) {
+      google.script.run
+        .withSuccessHandler(function(response) {
+          alert("Request submitted! ID: " + response);
+          document.getElementById("description").value = ""; 
+          document.getElementById("category").value = ""; 
+          document.getElementById("attachment").value = ""; 
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          loadMyTickets();
+        })
+        .withFailureHandler(function(error) {
+          alert("Error: " + error.message);
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        })
+        .createJobOrder(user, desc, category, fileData, fileName, mimeType);
+    }
+
+    function logoutGoogle() {
+  window.top.location.href = 'https://accounts.google.com/Logout';
+}
+    function loadMyTickets() {
+      google.script.run
+        .withSuccessHandler(function(jobs) {
+          const tbody = document.getElementById("myTicketsBody");
+          tbody.innerHTML = "";
+          
+          if (!jobs || jobs.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='4' class='text-center'>You have no active tickets.</td></tr>";
+            return;
+          }
+          
+          jobs.reverse().forEach(function(job) {
+            const isPending = job.Status === "Pending";
+            const statusClass = isPending ? "status-pending" : "status-done";
+            const techName = isPending ? "Unassigned" : job.Technician;
+              
+            let row = `<tr>
+              <td><strong>${job.JobID}</strong></td>
+              <td>${job.IssueDescription}</td>
+              <td><span class="${statusClass}">${job.Status}</span></td>
+              <td><small class="text-muted">${techName}</small></td>
+            </tr>`;
+            tbody.innerHTML += row;
+          });
+        })
+        .getJobsData();
+    }
+  </script>
+</body>
+</html>
